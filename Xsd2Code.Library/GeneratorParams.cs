@@ -51,7 +51,7 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Behavior")]
         [DefaultValue(false)]
-        [Description("Indicating whether if generate summary documentation from xsd annotation.")]
+        [Description("Indicating whether if generate summary documentation from XSD annotation.")]
         public bool EnableSummaryComment { get; set; }
     }
 
@@ -148,13 +148,13 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets a value indicating the name of Serialize method.
         /// </summary>
-        [Category("Serialize"), DefaultValue("SaveToFile"), Description("The name of save to xml file method.")]
+        [Category("Serialize"), DefaultValue("SaveToFile"), Description("The name of save to XML file method.")]
         public string SaveToFileMethodName { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating the name of SaveToFile method.
         /// </summary>
-        [Category("Serialize"), DefaultValue("LoadFromFile"), Description("The name of load from xml file method.")]
+        [Category("Serialize"), DefaultValue("LoadFromFile"), Description("The name of load from XML file method.")]
         public string LoadFromFileMethodName { get; set; }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace Xsd2Code.Library
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether suppoort  .
+        /// Gets or sets a value indicating whether support  .
         /// </summary>
         [Category("Serialize")]
         [DefaultValue(false)]
@@ -179,11 +179,11 @@ namespace Xsd2Code.Library
         public bool EnableEncoding { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating dafault encoder for serialize/deserialize
+        /// Gets or sets a value indicating default encoder for serialize/deserialize
         /// </summary>
         [Category("Serialize")]
         [DefaultValue(DefaultEncoder.UTF8)]
-        [Description("Specifies the default encoding for Xml Serialization (ASCII, UNICODE, UTF8...).")]
+        [Description("Specifies the default encoding for XML Serialization (ASCII, UNICODE, UTF8...).")]
         public DefaultEncoder DefaultEncoder { get; set; }
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Serialize")]
         [DefaultValue(false)]
-        [Description("Indicating whether if generate .NET 2.0 serialization attributes. If false, serilisation will use propertyName")]
+        [Description("Indicating whether if generate .NET 2.0 serialization attributes. If false, serialization will use propertyName")]
         public bool GenerateXmlAttributes { get; set; }
 
         private bool _generateOrderXmlAttributes;
@@ -200,7 +200,7 @@ namespace Xsd2Code.Library
         /// Gets or sets a value indicating the name of SaveToFile method.
         /// </summary>
         [Category("Serialize"), DefaultValue(false),
-         Description("Generate order xml Attribute (Work only if GenerateXmlAttributes is true).")]
+         Description("Generate order XML Attribute (Work only if GenerateXmlAttributes is true).")]
         public bool GenerateOrderXmlAttributes
         {
             get { return _generateOrderXmlAttributes; }
@@ -259,11 +259,11 @@ namespace Xsd2Code.Library
         }
     }
 
-    public class GenericBaseClassParames : GeneratorParamsBase
+    public class GenericBaseClassParams : GeneratorParamsBase
     {
         private bool enabledField;
 
-        [Category("Behavior"), DefaultValue(false), Description("Use generic patial base class for all methods")]
+        [Category("Behavior"), DefaultValue(false), Description("Use generic partial base class for all methods")]
         public bool Enabled
         {
             get { return enabledField; }
@@ -280,13 +280,13 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Gets or sets a value indicating the name of Serialize method.
         /// </summary>
-        [DefaultValue("EntityBase"), Description("Name of generic patial base class")]
+        [DefaultValue("EntityBase"), Description("Name of generic partial base class")]
         public string BaseClassName { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating the name of Serialize method.
+        /// Generate a base class
         /// </summary>
-        [DefaultValue("true"), Description("Generate base class code inside [ShemaName].designer.cs file")]
+        [DefaultValue("true"), Description("Generate base class code inside the output file")]
         public bool GenerateBaseClass { get; set; }
 
         public override string ToString()
@@ -298,7 +298,7 @@ namespace Xsd2Code.Library
     /// Represents all generation parameters
     /// </summary>
     /// <remarks>
-    /// Develeper Notes:
+    /// Developer Notes:
     /// When adding a new parameter:
     /// 
     ///     Add the Property
@@ -333,15 +333,15 @@ namespace Xsd2Code.Library
         /// <summary>
         /// Indicate if use generic base class for isolate all methods
         /// </summary>
-        private GenericBaseClassParames genericBaseClassField;
+        private GenericBaseClassParams genericBaseClassField;
 
         /// <summary>
-        /// Indicate if use tracking change algrithm.
+        /// Indicate if use tracking change algorithm.
         /// </summary>
         private TrackingChangesParams trackingChangesField;
 
         /// <summary>
-        /// Serilisation params
+        /// Serialisation params
         /// </summary>
         private SerializeParams serializeFiledField;
 
@@ -359,18 +359,23 @@ namespace Xsd2Code.Library
         /// Indicate if implement INotifyPropertyChanged
         /// </summary>
         private PropertyParams propertyParamsField;
-        #endregion
 
         /// <summary>
         /// Indicate the target framework
         /// </summary>
         private TargetFramework targetFrameworkField = default(TargetFramework);
 
+        /// <summary>
+        /// Indicate the output language
+        /// </summary>
+        private GenerationLanguage language;
+
+        #endregion
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GeneratorParams"/> class.
         /// </summary>
-        public GeneratorParams()
+        public GeneratorParams(string inputXsdFile = "")
         {
             this.Serialization.LoadFromFileMethodName = "LoadFromFile";
             this.Serialization.SaveToFileMethodName = "SaveToFile";
@@ -382,10 +387,12 @@ namespace Xsd2Code.Library
             this.Miscellaneous.ExcludeIncludedTypes = false;
             this.TrackingChanges.PropertyChanged += TrackingChangesPropertyChanged;
             this.Serialization.DefaultEncoder = DefaultEncoder.UTF8;
+            this.GenerateSeparateFiles = false;
+            this.OutputFilePath = string.IsNullOrEmpty(inputXsdFile) ? "" : Path.ChangeExtension(inputXsdFile, ".designer.cs");
         }
 
         /// <summary>
-        /// Trackings the changes property changed.
+        /// Tracking the changes property changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.ComponentModel.PropertyChangedEventArgs"/> instance containing the event data.</param>
@@ -413,13 +420,30 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Code")]
         [Description("Language")]
-        public GenerationLanguage Language { get; set; }
+        public GenerationLanguage Language
+        {
+            get
+            {
+                return language;
+            }
+            set
+            {
+                language = value;
+                if (!string.IsNullOrEmpty(OutputFilePath))
+                {
+                    if (value == GenerationLanguage.CSharp)
+                        OutputFilePath = Path.ChangeExtension(OutputFilePath, ".cs");
+                    if (value == GenerationLanguage.VisualBasic)
+                        OutputFilePath = Path.ChangeExtension(OutputFilePath, ".vb");
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets the output file path.
         /// </summary>
         /// <value>The output file path.</value>
-        [Browsable(false)]
+        [Category("Code")]
         public string OutputFilePath { get; set; }
 
         /// <summary>
@@ -575,7 +599,7 @@ namespace Xsd2Code.Library
         /// Gets or sets a value indicating whether if generate summary documentation
         /// </summary>
         [Category("Behavior")]
-        [Description("XML Serilisation configuration.")]
+        [Description("XML Serialization configuration.")]
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public SerializeParams Serialization
         {
@@ -623,13 +647,13 @@ namespace Xsd2Code.Library
         [Category("Behavior")]
         [Description("Generic base class configuration.")]
         [TypeConverter(typeof(ExpandableObjectConverter))]
-        public GenericBaseClassParames GenericBaseClass
+        public GenericBaseClassParams GenericBaseClass
         {
             get
             {
                 if (genericBaseClassField == null)
                 {
-                    genericBaseClassField = new GenericBaseClassParames();
+                    genericBaseClassField = new GenericBaseClassParams();
                 }
                 return genericBaseClassField;
             }
@@ -653,8 +677,19 @@ namespace Xsd2Code.Library
         /// </summary>
         [Category("Behavior")]
         [DefaultValue(true)]
-        [Description("Enable/Disable Global initialisation of the fields in both Constructors, Lazy Properties. Maximum override")]
+        [Description("Enable/Disable Global initialization of the fields in both Constructors, Lazy Properties. Maximum override")]
         public bool EnableInitializeFields { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to generate the code in one file or one file per type
+        /// </summary>
+        [Category("Code")]
+        [DefaultValue(false)]
+        [Description("Generated in separate files")]
+        public bool GenerateSeparateFiles
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Loads from file.
@@ -672,9 +707,10 @@ namespace Xsd2Code.Library
         /// </summary>
         /// <param name="xsdFilePath">The XSD file path.</param>
         /// <param name="outputFile">The output file.</param>
+        /// <param name="previousOutputFile">An optional previous output file (useful to read the previous parameters)</param>
         /// <returns>GeneratorParams instance</returns>
 
-        public static GeneratorParams LoadFromFile(string xsdFilePath, out string outputFile)
+        public static GeneratorParams LoadFromFile(string xsdFilePath, out string outputFile, string previousOutputFile = null)
         {
             var parameters = new GeneratorParams();
 
@@ -701,10 +737,17 @@ namespace Xsd2Code.Library
                 //Load from the output files if one of them exist
                 foreach (GenerationLanguage language in Enum.GetValues(typeof(GenerationLanguage)))
                 {
+                    if (!string.IsNullOrEmpty(previousOutputFile))
+                    {
+                        if (File.Exists(previousOutputFile))
+                        {
+                            configFile = previousOutputFile;
+                            break;
+                        }
+                    }
                     string fileName = Utility.GetOutputFilePath(xsdFilePath, language);
                     if (File.Exists(fileName))
                     {
-                        outputFile = fileName;
                         configFile = fileName;
                         break;
                     }
@@ -727,7 +770,7 @@ namespace Xsd2Code.Library
 
             #region Try to get Last options
 
-            //DCM Created Routine to Search for Auto-Generated Paramters
+            //DCM Created Routine to Search for Auto-Generated Parameters
             var optionLine = ExtractAutoGeneratedParams(configFile);
 
             //DCM Fall back to old method because of some invalid Tag names
@@ -749,6 +792,8 @@ namespace Xsd2Code.Library
                 parameters.CollectionObjectType = Utility.ToEnum<CollectionType>(optionLine.ExtractStrFromXML(GeneratorContext.COLLECTIONTAG));
                 parameters.Language = Utility.ToEnum<GenerationLanguage>(optionLine.ExtractStrFromXML(GeneratorContext.CODETYPETAG));
                 parameters.EnableDataBinding = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLEDATABINDINGTAG));
+                parameters.GenerateSeparateFiles = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.GENERATESEPARATEFILES));
+                parameters.OutputFilePath = optionLine.ExtractStrFromXML(GeneratorContext.OUTPUTFILEPATH);
                 parameters.PropertyParams.EnableLazyLoading = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLELAZYLOADINGTAG));
                 parameters.Miscellaneous.HidePrivateFieldInIde = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.HIDEPRIVATEFIELDTAG));
                 parameters.Miscellaneous.EnableSummaryComment = Utility.ToBoolean(optionLine.ExtractStrFromXML(GeneratorContext.ENABLESUMMARYCOMMENTTAG));
@@ -816,9 +861,9 @@ namespace Xsd2Code.Library
         }
 
         /// <summary>
-        /// Save values into xml string
+        /// Save values into XML string
         /// </summary>
-        /// <returns>xml string value</returns>
+        /// <returns>XML string value</returns>
         public string ToXmlTag()
         {
             // order does not matter, but would be nice to have same order as in parsing method 'LoadFromFile'
@@ -827,6 +872,8 @@ namespace Xsd2Code.Library
                 { GeneratorContext.COLLECTIONTAG, this.CollectionObjectType },
                 { GeneratorContext.COLLECTIONBASETAG, this.CollectionBase },
                 { GeneratorContext.CODETYPETAG, this.Language },
+                { GeneratorContext.GENERATESEPARATEFILES, this.GenerateSeparateFiles },
+                { GeneratorContext.OUTPUTFILEPATH, this.OutputFilePath },
                 { GeneratorContext.ENABLEDATABINDINGTAG, this.EnableDataBinding },
                 { GeneratorContext.ENABLELAZYLOADINGTAG, this.PropertyParams.EnableLazyLoading },
                 { GeneratorContext.HIDEPRIVATEFIELDTAG, this.Miscellaneous.HidePrivateFieldInIde },
@@ -856,15 +903,18 @@ namespace Xsd2Code.Library
                 { GeneratorContext.EXCLUDEINCLUDEDTYPESTAG, this.Miscellaneous.ExcludeIncludedTypes },
                 { GeneratorContext.ENABLEINITIALIZEFIELDSTAG, this.EnableInitializeFields }
             };
-            if (this.CustomUsings != null) {
-                tagsAndValues.Add(GeneratorContext.CUSTOMUSINGSTAG,  string.Join(";", 
-                    this.CustomUsings.Select(x=>x.NameSpace).Where(usingNamespace => !string.IsNullOrEmpty(usingNamespace)).ToArray()));
+            if (this.CustomUsings != null)
+            {
+                tagsAndValues.Add(GeneratorContext.CUSTOMUSINGSTAG, string.Join(";",
+                    this.CustomUsings.Select(x => x.NameSpace).Where(usingNamespace => !string.IsNullOrEmpty(usingNamespace)).ToArray()));
             }
-            
+
             var optionsLine = new StringBuilder();
-            foreach (var pair in tagsAndValues) {
+            foreach (var pair in tagsAndValues)
+            {
                 var stringVal = Convert.ToString(pair.Value);
-                if (!string.IsNullOrEmpty(stringVal)) {
+                if (!string.IsNullOrEmpty(stringVal))
+                {
                     optionsLine.Append(XmlHelper.InsertXMLFromStr(pair.Key, stringVal));
                 }
             }
@@ -929,7 +979,7 @@ namespace Xsd2Code.Library
 
                 if (string.IsNullOrEmpty(this.Serialization.SaveToFileMethodName))
                 {
-                    result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the save to xml file method name.");
+                    result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the save to XML file method name.");
                 }
 
                 if (!IsValidMethodName(this.Serialization.SaveToFileMethodName))
@@ -940,7 +990,7 @@ namespace Xsd2Code.Library
 
                 if (string.IsNullOrEmpty(this.Serialization.LoadFromFileMethodName))
                 {
-                    result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the load from xml file method name.");
+                    result.Success = false; result.Messages.Add(MessageType.Error, "you must specify the load from XML file method name.");
                 }
 
                 if (!IsValidMethodName(this.Serialization.LoadFromFileMethodName))
@@ -977,7 +1027,7 @@ namespace Xsd2Code.Library
         /// extracts the values contained in the GeneratorContext.AUTOGENERATEDTAG
         /// </summary>
         /// <param name="filePath">The file path.</param>
-        /// <returns>String containing the Psuedo XML tags for Generator Params</returns>
+        /// <returns>String containing the Pseudo XML tags for Generator Params</returns>
         /// <remarks>Doesn't rely on Position with in the file</remarks>
         private static string ExtractAutoGeneratedParams(string filePath)
         {
